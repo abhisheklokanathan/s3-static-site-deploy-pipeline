@@ -1,0 +1,58 @@
+name: Deploy My Personal Website to S3 bucket.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read    
+jobs:
+  Deploy_My_Website:
+    runs-on: ubuntu-latest
+    steps:
+    - name: AWS configure credentilas
+      uses: aws-actions/configure-aws-credentials@v4.1.0
+      with:
+        role-to-assume: ${{ secrets.IAM_ROLE }}
+        aws-region: ap-south-1
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required to get all tags      
+    - name: Get latest semantic version
+      id: get_version
+      run: |
+          # Get the latest tag (e.g. v1.2.3)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -n 1)
+          echo "Latest tag: $LATEST_TAG"
+
+          if [ -z "$LATEST_TAG" ]; then
+            VERSION="1.0.0"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+            PATCH=$((PATCH + 1))
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::$VERSION"
+
+    - name: Create Git tag for new version
+      run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag v${{ env.VERSION }}
+          git push origin v${{ env.VERSION }}
+    - name: Create .tar.gz archive of static site
+      run: |
+         tar -czf site-${{ env.VERSION }}.tar.gz -C ./build .
+
+    - name: Extract .tar.gz file
+      run: |
+          mkdir extracted
+          tar -xzf site-${{ env.VERSION }}.tar.gz -C extracted
+          echo "Extracted contents:"
+          ls -l extracted         
+    - name: Upload archive to S3
+      run: |
+          aws s3 cp site-${{ env.VERSION }}.tar.gz s3://${{ env.BUCKET_NAME }}/${{ env.VERSION }}/site-${{ env.VERSION }}.tar.gz
