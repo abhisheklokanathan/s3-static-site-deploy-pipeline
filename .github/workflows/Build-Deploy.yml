@@ -51,7 +51,8 @@ jobs:
           
     - name: Create .tar.gz archive of static site
       run: |
-         tar -czf my-static-site-${{ env.VERSION }}.tar.gz $GITHUB_WORKSPACE/images $GITHUB_WORKSPACE/index.html $GITHUB_WORKSPACE/styles
+         tar -czf my-static-site-${{ env.VERSION }}.tar.gz images index.html styles
+      working-directory: ${{ github.workspace }}
 
     - name: Upload tar archive as artifact
       uses: actions/upload-artifact@v4
@@ -70,6 +71,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
