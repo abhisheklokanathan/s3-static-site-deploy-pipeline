@@ -7,7 +7,7 @@ permissions:
   id-token: write
   contents: write    
 jobs:
-  Deploy_My_Website:
+  Login-to-AWS:
     runs-on: ubuntu-latest
     steps:
     - name: AWS configure credentilas
@@ -15,17 +15,26 @@ jobs:
       with:
         role-to-assume: ${{ secrets.IAM_ROLE }}
         aws-region: ap-south-1
-    
+        
+  Checkout-Repo:
+    runs-on: ubuntu-latest
+    steps:    
     - name: Checkout source
       uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Required to get all tags
 
+  Setup-Credentials:
+    runs-on: ubuntu-latest
+    steps:
     - name: Set up git
       run: |
        git config user.name "${{ github.actor }}"
        git config user.email "${{ github.actor }}@gmail.com"
-       
+
+  Get-Tag-Version:
+    runs-on: ubuntu-latest
+    steps:       
     - name: Get latest semantic version
       id: get_version
       run: |
@@ -44,22 +53,34 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "name=version::$VERSION" >> $GITHUB_OUTPUT
 
+  Update-Tag-Version:
+    runs-on: ubuntu-latest
+    steps:
     - name: Create Git tag for new version
       run: |
           git tag v${{ env.VERSION }}
           git push origin v${{ env.VERSION }}
-          
+
+  Create-Artifactory:
+    runs-on: ubuntu-latest
+    steps:          
     - name: Create .tar.gz archive of static site
       run: |
          tar -czf my-static-site-${{ env.VERSION }}.tar.gz images index.html styles
       working-directory: ${{ github.workspace }}
 
+  Push-Artifactory:
+    runs-on: ubuntu-latest
+    steps:
     - name: Upload tar archive as artifact
       uses: actions/upload-artifact@v4
       with:
         name: my-tar-archive
         path: my-static-site-${{ env.VERSION }}.tar.gz
 
+  Deply-to-S3-Bucket:
+    runs-on: ubuntu-latest
+    steps:
     - name: Extract .tar.gz file
       run: |
           mkdir extracted-v${{ env.VERSION }}
@@ -71,3 +92,4 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
