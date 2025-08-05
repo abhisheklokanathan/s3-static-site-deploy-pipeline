@@ -80,7 +80,7 @@ jobs:
       - name: Extract .tar.gz file
         run: |
          VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
-         TARBALL="my-static-site-v$VERSION.tar.gz"
+         TARBALL="my-static-site-$VERSION.tar.gz"
          EXTRACT_DIR="extracted-v$VERSION"
 
          mkdir "$EXTRACT_DIR"
@@ -102,26 +102,3 @@ jobs:
           aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website/index.html
           aws s3 cp "$DIR/images/" s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/styles/ --recursive
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
