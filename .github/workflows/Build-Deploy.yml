@@ -22,9 +22,7 @@ jobs:
     steps:    
     - name: Checkout source
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Required to get all tags
-        
+      
     - name: Set up git
       run: |
        git config user.name "${{ github.actor }}"
@@ -38,7 +36,9 @@ jobs:
     steps:  
     - name: Checkout source
       uses: actions/checkout@v4
-      
+      with:
+        fetch-depth: 0  # Required to get all tags
+        
     - name: Get latest semantic version
       id: get_version
       run: |
@@ -104,6 +104,7 @@ jobs:
           aws s3 cp extracted-v${{ needs.Get-Tag-Version.outputs.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ needs.Get-Tag-Version.outputs.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ needs.Get-Tag-Version.outputs.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
