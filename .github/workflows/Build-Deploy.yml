@@ -39,20 +39,27 @@ jobs:
 
     - name: Create Git tag for new version
       run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
           git tag v${{ env.VERSION }}
           git push origin v${{ env.VERSION }}
+          
     - name: Create .tar.gz archive of static site
       run: |
-         tar -czf site-${{ env.VERSION }}.tar.gz -C ./build .
+         tar -czfz my-static-site-${{ env.VERSION }}.tar.gz -C $GITHUB_WORKSPACE/images/ $GITHUB_WORKSPACE/index.html $GITHUB_WORKSPACE/styles/
+
+    - name: Upload tar archive as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-tar-archive
+        path: my-static-site-${{ env.VERSION }}.tar.g
 
     - name: Extract .tar.gz file
       run: |
-          mkdir extracted
-          tar -xzf site-${{ env.VERSION }}.tar.gz -C extracted
+          mkdir extracted-v${{ env.VERSION }
+          tar -xzfz my-static-site-${{ env.VERSION }}.tar.gz -C extracted
           echo "Extracted contents:"
-          ls -l extracted         
+          ls -l extracted-v${{ env.VERSION }         
     - name: Upload archive to S3
       run: |
-          aws s3 cp site-${{ env.VERSION }}.tar.gz s3://${{ env.BUCKET_NAME }}/${{ env.VERSION }}/site-${{ env.VERSION }}.tar.gz
+          aws s3 cp extracted-v${{ env.VERSION }/index.html s3://aws-mypersonal-website/index.html
+          aws s3 cp extracted-v${{ env.VERSION }/images/ s3://aws-mypersonal-website/images/ --recursive
+          aws s3 cp extracted-v${{ env.VERSION }/styles/ s3://aws-mypersonal-website/styles/ --recursive
