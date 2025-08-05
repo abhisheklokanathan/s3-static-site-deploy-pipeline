@@ -62,8 +62,8 @@ jobs:
       
     - name: Create Git tag for new version
       run: |
-          git tag v${{ needs.Get-Tag-Version.VERSION }}
-          git push origin v${{ needs.Get-Tag-Version.VERSION }}
+          git tag v${{ needs.Get-Tag-Version.outputs.VERSION }}
+          git push origin v${{ needs.Get-Tag-Version.outputs.VERSION }}
 
   Create-Artifactory:
     runs-on: ubuntu-latest
@@ -99,6 +99,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
