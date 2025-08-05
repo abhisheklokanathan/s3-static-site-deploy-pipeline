@@ -37,7 +37,7 @@ jobs:
             VERSION="1.0.0"
           else
             IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
-            PATCH=$((PATCH + 1))
+            MINOR=$((MINOR + 1))
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
 
@@ -71,6 +71,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
