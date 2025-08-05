@@ -5,7 +5,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read    
+  contents: write    
 jobs:
   Deploy_My_Website:
     runs-on: ubuntu-latest
@@ -15,6 +15,12 @@ jobs:
       with:
         role-to-assume: ${{ secrets.IAM_ROLE }}
         aws-region: ap-south-1
+
+    - name: Set up git
+      run: |
+       git config user.name "${{ github.actor }}"
+       git config user.email "${{ github.actor }}@users.noreply.github.com"
+    
     - name: Checkout source
       uses: actions/checkout@v4
       with:
@@ -63,4 +69,5 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
