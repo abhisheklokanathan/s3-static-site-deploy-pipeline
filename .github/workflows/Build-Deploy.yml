@@ -61,7 +61,7 @@ jobs:
 
     - name: Extract .tar.gz file
       run: |
-          mkdir extracted-v${ env.VERSION }}
+          mkdir extracted-v${{ env.VERSION }}
           tar -xzf my-static-site-${{ env.VERSION }}.tar.gz -C extracted-v${ env.VERSION }}
           echo "Extracted contents:"
           ls -l extracted-v${ env.VERSION }}        
@@ -70,6 +70,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
