@@ -51,9 +51,7 @@ jobs:
             MINOR=$((MINOR + 1))
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
-
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "name=version::$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
   Update-Tag-Version:
     runs-on: ubuntu-latest
@@ -64,8 +62,8 @@ jobs:
       
     - name: Create Git tag for new version
       run: |
-          git tag v${{ env.VERSION }}
-          git push origin v${{ env.VERSION }}
+          git tag v${{ needs.Get-Tag-Version.VERSION }}
+          git push origin v${{ needs.Get-Tag-Version.VERSION }}
 
   Create-Artifactory:
     runs-on: ubuntu-latest
@@ -101,6 +99,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
