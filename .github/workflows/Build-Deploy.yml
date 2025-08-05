@@ -32,8 +32,11 @@ jobs:
 
   Get-Tag-Version:
     runs-on: ubuntu-latest
-    needs: [Login-to-AWS,Setup-Credentials]
-    steps:       
+    needs: [Login-to-AWS,Setup-Credentials]   
+    steps:  
+    - name: Checkout source
+      uses: actions/checkout@v4
+      
     - name: Get latest semantic version
       id: get_version
       run: |
@@ -56,6 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [Login-to-AWS,Setup-Credentials,Get-Tag-Version]
     steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      
     - name: Create Git tag for new version
       run: |
           git tag v${{ env.VERSION }}
@@ -95,6 +101,7 @@ jobs:
           aws s3 cp extracted-v${{ env.VERSION }}/index.html s3://aws-mypersonal-website/index.html
           aws s3 cp extracted-v${{ env.VERSION }}/images/ s3://aws-mypersonal-website/images/ --recursive
           aws s3 cp extracted-v${{ env.VERSION }}/styles/ s3://aws-mypersonal-website/styles/ --recursive
+
 
 
 
