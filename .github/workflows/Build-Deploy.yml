@@ -99,6 +99,7 @@ jobs:
           VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
           DIR="extracted-v$VERSION"
 
-          aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website/index.html
-          aws s3 cp "$DIR/images/" s3://aws-mypersonal-website/images/ --recursive
-          aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/styles/ --recursive
+          aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website/$VERSION/index.html
+          aws s3 cp "$DIR/images/" s3://aws-mypersonal-website/$VERSION/images/ --recursive
+          aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/$VERSION/styles/ --recursive
+
