@@ -105,7 +105,8 @@ jobs:
           touch root.json
           echo '{ 
                    "version": "$VERSION" 
-                 }' > root.json
-          sed -i 's/"version": *"[^"]*"/"version": "$VERSION"/' root.json
+          }' > root.json
+          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" root.json
           aws s3 cp "root.json" s3://aws-mypersonal-website/root.json
+
 
