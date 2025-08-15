@@ -104,9 +104,10 @@ jobs:
           aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/$VERSION/styles/ --recursive
           touch root.json
           echo '{ 
-                   "version": "$VERSION" 
+            "version": "$VERSION" 
           }' > root.json
           sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" root.json
           aws s3 cp "root.json" s3://aws-mypersonal-website/root.json
+
 
 
