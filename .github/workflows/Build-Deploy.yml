@@ -102,4 +102,10 @@ jobs:
           aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website/$VERSION/index.html
           aws s3 cp "$DIR/images/" s3://aws-mypersonal-website/$VERSION/images/ --recursive
           aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/$VERSION/styles/ --recursive
+          touch root.json
+          echo '{ 
+                   "version": "$VERSION" 
+                 }' > root.json
+          sed -i 's/"version": *"[^"]*"/"version": "$VERSION"/' root.json
+          aws s3 cp "root.json" s3://aws-mypersonal-website/root.json
 
