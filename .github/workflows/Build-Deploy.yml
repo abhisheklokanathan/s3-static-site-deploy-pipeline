@@ -102,7 +102,7 @@ jobs:
           aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website/$VERSION/index.html
           aws s3 cp "$DIR/images/" s3://aws-mypersonal-website/$VERSION/images/ --recursive
           aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website/$VERSION/styles/ --recursive
-          aws s3 cp s3://aws-mypersonal-website/root.json root.json
+          #aws s3 cp s3://aws-mypersonal-website/root.json root.json
           touch root.json
           echo '{ 
             "version": "$VERSION" 
@@ -153,5 +153,6 @@ jobs:
       # - name: Apply the updated CloudFront configuration
       #   run: |
       #     aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1
+
 
 
