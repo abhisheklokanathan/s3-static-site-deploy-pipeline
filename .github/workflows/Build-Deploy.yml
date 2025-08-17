@@ -116,8 +116,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [Get-Tag-Version,Update-Tag-Version,Create-Upload-Artifact,Deploy-to-S3-Bucket]
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: AWS configure credentilas
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: ${{ secrets.IAM_ROLE }}
+          aws-region: us-east-1
         
       - name: Get current Lambda version
         id: get_version
@@ -162,4 +165,5 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id E18NW8RP4VFBMV \
             --paths "/*"
+
 
