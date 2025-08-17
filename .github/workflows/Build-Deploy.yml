@@ -122,32 +122,22 @@ jobs:
           echo "Latest Lambda Version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update CloudFront Lambda@Edge Association
+      - name: Get Current CloudFront Distribution Config
+        id: get_distribution
         run: |
-          DIST_ID="E18NW8RP4VFBMV"
-          FUNCTION_ARN="arn:aws:lambda:us-east-1:761018887005:function:versionedUriRewriter:${{ steps.get_version.outputs.version }}"
+  
+          # Get the CloudFront distribution config to update
+          aws cloudfront get-distribution-config --id E18NW8RP4VFBMV --region us-east-1 > dist-config.json            
+          ETag=$(jq -r '.ETag' dist-config.json)
+          echo "etag=$ETag" >> $GITHUB_OUTPUT  # Store ETag for use in next steps
+        
 
-          # Get current config + ETag
-          aws cloudfront get-distribution-config --id $DIST_ID --output json > dist-config.json
-          ETag=$(aws cloudfront get-distribution-config --id $DIST_ID --query "ETag" --output text)
-
-          # Update only the Lambda@Edge association using jq
-          jq --arg ARN "$FUNCTION_ARN" '
-            .DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations = {
-              "Quantity": 1,
-              "Items": [
-                {
-                  "LambdaFunctionARN": $ARN,
-                  "EventType": "viewer-request",
-                  "IncludeBody": false
-                }
-              ]
-            }' dist-config.json > updated-config.json
-
-          # Update CloudFront
-          aws cloudfront update-distribution \
-            --id $DIST_ID \
-            --if-match $ETag \
-            --distribution-config file://updated-config.json
-
-
+      - name: Update CloudFront Distribution
+        run: |
+          # Get the Lambda ARN with the specific version
+          NEW_LAMBDA_ARN="arn:aws:lambda:us-east-1:761018887005:function:versionedUriRewriter:${{ steps.get_version.outputs.version }}"
+          # Update the Lambda function ARN in the CloudFront config
+          jq --arg new_lambda_arn "$NEW_LAMBDA_ARN" '.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = $new_lambda_arn' dist-config.json > updated-config.json
+        
+          # Apply the updated CloudFront distribution config
+          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1                
