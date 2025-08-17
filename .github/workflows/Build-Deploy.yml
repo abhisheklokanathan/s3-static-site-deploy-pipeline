@@ -144,5 +144,6 @@ jobs:
           # Apply the updated CloudFront distribution config (only changing the Lambda function association)
           echo "$UPDATED_DIST_CONFIG" > updated-config.json
         
-          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1      
+          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1  
+
 
