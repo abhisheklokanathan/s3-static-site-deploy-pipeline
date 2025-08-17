@@ -133,18 +133,24 @@ jobs:
           # Use the function ARN passed from the previous step
           FUNCTION_ARN=${{ env.LambdaArn }}
           DIST_ID="E18NW8RP4VFBMV"  # Replace with your CloudFront distribution ID
-
+    
           # Get the current ETag from CloudFront distribution
           ETAG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'ETag' --output text)
+  
+          # Retrieve the current distribution config
+          DIST_CONFIG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'DistributionConfig' --output json)
 
-          # Ensure that your distribution_config.json file exists or generate it dynamically
+          # Modify the distribution config to add the Lambda function association
+          # You may need to use jq or other methods to dynamically modify the DIST_CONFIG
+          UPDATED_CONFIG=$(echo $DIST_CONFIG | jq '.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = "'$FUNCTION_ARN'"')
+    
+          # Update the CloudFront distribution with the new Lambda function ARN
           aws cloudfront update-distribution \
             --id $DIST_ID \
             --if-match $ETAG \
-            --distribution-config file://distribution_config.json \
-            --default-cache-behavior "{\"LambdaFunctionAssociations\":{\"Quantity\":1,\"Items\":[{\"LambdaFunctionARN\":\"$FUNCTION_ARN\",\"EventType\":\"viewer-request\",\"IncludeBody\":false}]}}"
+            --distribution-config "$UPDATED_CONFIG"
 
-           echo "✅ CloudFront distribution updated with new Lambda version."         
+          echo "✅ CloudFront distribution updated with new Lambda version."        
 
       # - name: Get Current CloudFront Distribution Config
       #   id: get_distribution
@@ -173,6 +179,7 @@ jobs:
       # - name: Apply the updated CloudFront configuration
       #   run: |
       #     aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1
+
 
 
 
