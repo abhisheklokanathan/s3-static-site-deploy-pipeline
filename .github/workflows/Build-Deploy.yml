@@ -92,7 +92,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           role-to-assume: ${{ secrets.IAM_ROLE }}
-          aws-region: ap-south-1
+          aws-region: us-east-1
         
       - name: Upload archive to S3
         run: |
@@ -149,4 +149,5 @@ jobs:
             --id $DIST_ID \
             --if-match $ETag \
             --distribution-config file://updated-config.json
+
 
