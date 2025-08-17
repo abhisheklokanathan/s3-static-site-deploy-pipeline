@@ -130,23 +130,19 @@ jobs:
           ETag=$(jq -r '.ETag' dist-config.json)
           echo "etag=$ETag" >> $GITHUB_OUTPUT  # Store ETag for use in next steps
 
-      - name: Update CloudFront Distribution
+      - name: Update CloudFront Distribution Lambda Association
         run: |
           # Get the Lambda ARN with the specific version
           NEW_LAMBDA_ARN="arn:aws:lambda:us-east-1:761018887005:function:versionedUriRewriter:${{ steps.get_version.outputs.version }}"
         
-          # Fetch the entire distribution config (from dist-config.json)
+          # Fetch the distribution config
           DIST_CONFIG=$(cat dist-config.json)
 
-          # Update the Lambda ARN in the CloudFront distribution config
+          # Update only the Lambda function association for the 'viewer-request' event
           UPDATED_DIST_CONFIG=$(echo "$DIST_CONFIG" | jq --arg new_lambda_arn "$NEW_LAMBDA_ARN" '.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = $new_lambda_arn')
 
-          # Include other required parameters if they are missing (make sure no required fields are omitted)
-          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "CallerReference"]; "updated-reference")')
-          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "Origins", "Quantity"]; 1)')
-          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "DefaultCacheBehavior", "CachePolicyId"]; "658327ea-f89d-4fab-a63d-7e88639e58f6")')
-
-          # Apply the updated CloudFront distribution config
+          # Apply the updated CloudFront distribution config (only changing the Lambda function association)
           echo "$UPDATED_DIST_CONFIG" > updated-config.json
         
-          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1          
+          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1      
+
