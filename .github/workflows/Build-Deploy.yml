@@ -125,19 +125,28 @@ jobs:
       - name: Get Current CloudFront Distribution Config
         id: get_distribution
         run: |
-  
-          # Get the CloudFront distribution config to update
-          aws cloudfront get-distribution-config --id E18NW8RP4VFBMV --region us-east-1 > dist-config.json            
+          # Fetch the CloudFront distribution config
+          aws cloudfront get-distribution-config --id E18NW8RP4VFBMV --region us-east-1 > dist-config.json
           ETag=$(jq -r '.ETag' dist-config.json)
           echo "etag=$ETag" >> $GITHUB_OUTPUT  # Store ETag for use in next steps
-        
 
       - name: Update CloudFront Distribution
         run: |
           # Get the Lambda ARN with the specific version
           NEW_LAMBDA_ARN="arn:aws:lambda:us-east-1:761018887005:function:versionedUriRewriter:${{ steps.get_version.outputs.version }}"
-          # Update the Lambda function ARN in the CloudFront config
-          jq --arg new_lambda_arn "$NEW_LAMBDA_ARN" '.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = $new_lambda_arn' dist-config.json > updated-config.json
         
+          # Fetch the entire distribution config (from dist-config.json)
+          DIST_CONFIG=$(cat dist-config.json)
+
+          # Update the Lambda ARN in the CloudFront distribution config
+          UPDATED_DIST_CONFIG=$(echo "$DIST_CONFIG" | jq --arg new_lambda_arn "$NEW_LAMBDA_ARN" '.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = $new_lambda_arn')
+
+          # Include other required parameters if they are missing (make sure no required fields are omitted)
+          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "CallerReference"]; "updated-reference")')
+          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "Origins", "Quantity"]; 1)')
+          UPDATED_DIST_CONFIG=$(echo "$UPDATED_DIST_CONFIG" | jq 'setpath(["DistributionConfig", "DefaultCacheBehavior", "CachePolicyId"]; "658327ea-f89d-4fab-a63d-7e88639e58f6")')
+
           # Apply the updated CloudFront distribution config
-          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1                
+          echo "$UPDATED_DIST_CONFIG" > updated-config.json
+        
+          aws cloudfront update-distribution --id E18NW8RP4VFBMV --if-match ${{ steps.get_distribution.outputs.etag }} --distribution-config file://updated-config.json --region us-east-1          
