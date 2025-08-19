@@ -163,8 +163,9 @@ jobs:
         run: |
           # Create a CloudFront invalidation to clear the cache
           aws cloudfront create-invalidation \
-            --distribution-id E18NW8RP4VFBMV \
+            --distribution-id E1TEYMDM97OPVO \
             --paths "/*"
+
 
 
 
