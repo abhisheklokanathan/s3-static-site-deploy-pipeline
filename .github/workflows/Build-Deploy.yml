@@ -141,7 +141,7 @@ jobs:
         run: |
           # Use the function ARN passed from the previous step
           FUNCTION_ARN=${{ env.LambdaArn }}
-          DIST_ID="E3FOU4OAO2LM3P"  # Replace with your CloudFront distribution ID
+          DIST_ID="E2ORPHF7M1300M"  # Replace with your CloudFront distribution ID
     
           # Get the current ETag from CloudFront distribution
           ETAG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'ETag' --output text)
@@ -163,8 +163,9 @@ jobs:
         run: |
           # Create a CloudFront invalidation to clear the cache
           aws cloudfront create-invalidation \
-            --distribution-id E3FOU4OAO2LM3P \
+            --distribution-id E2ORPHF7M1300M \
             --paths "/*"
+
 
 
 
