@@ -132,7 +132,7 @@ jobs:
            
            DIST_ID=$(jq -r '.resources[] 
            | select(.type == "aws_cloudfront_distribution" and .name == "cdn") 
-           | .instances[0].attributes.id' ./terraform.tf.state)
+           | .instances[0].attributes.id' ./terrafrom.tf.state)
            echo "DISTRIBUTION_ID=$DIST_ID" >> $GITHUB_OUTPUT      
         
       # - name: Get current Lambda version
@@ -178,6 +178,7 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ steps.extract_distribution.outputs.DISTRIBUTION_ID }} \
             --paths "/*"
+
 
 
 
