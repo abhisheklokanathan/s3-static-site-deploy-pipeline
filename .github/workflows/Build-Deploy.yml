@@ -7,114 +7,114 @@ permissions:
   id-token: write
   contents: write    
 jobs:
-  # Get-Tag-Version:
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     version: ${{ steps.get_version.outputs.version }}    
-  #   steps:  
-  #   - name: Checkout source
-  #     uses: actions/checkout@v4
-  #     with:
-  #       fetch-depth: 0  # Required to get all tags
+  Get-Tag-Version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}    
+    steps:  
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required to get all tags
         
-  #   - name: Get latest semantic version
-  #     id: get_version
-  #     run: |
-  #         # Get the latest tag (e.g. v1.2.3)
-  #         LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -n 1)
-  #         echo "Latest tag: $LATEST_TAG"
+    - name: Get latest semantic version
+      id: get_version
+      run: |
+          # Get the latest tag (e.g. v1.2.3)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -n 1)
+          echo "Latest tag: $LATEST_TAG"
 
-  #         if [ -z "$LATEST_TAG" ]; then
-  #           VERSION="1.0.0"
-  #         else
-  #           IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
-  #           MINOR=$((MINOR + 1))
-  #           VERSION="${MAJOR}.${MINOR}.${PATCH}"
-  #         fi
-  #         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          if [ -z "$LATEST_TAG" ]; then
+            VERSION="1.0.0"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+            MINOR=$((MINOR + 1))
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           
-  # Create-Upload-Artifact:
-  #   runs-on: ubuntu-latest
-  #   needs: [Get-Tag-Version]
-  #   steps:     
-  #   - name: Checkout source
-  #     uses: actions/checkout@v4    
+  Create-Upload-Artifact:
+    runs-on: ubuntu-latest
+    needs: [Get-Tag-Version]
+    steps:     
+    - name: Checkout source
+      uses: actions/checkout@v4    
          
-  #   - name: Create .tar.gz archive of static site
-  #     run: |
-  #        tar -czf my-static-site-${{ needs.Get-Tag-Version.outputs.VERSION }}.tar.gz images index.html styles
-  #     working-directory: ${{ github.workspace }}
+    - name: Create .tar.gz archive of static site
+      run: |
+         tar -czf my-static-site-${{ needs.Get-Tag-Version.outputs.VERSION }}.tar.gz images index.html styles
+      working-directory: ${{ github.workspace }}
 
-  #   - name: Upload tar archive as artifact
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: my-tar-archive
-  #       path: my-static-site-${{ needs.Get-Tag-Version.outputs.VERSION }}.tar.gz
+    - name: Upload tar archive as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-tar-archive
+        path: my-static-site-${{ needs.Get-Tag-Version.outputs.VERSION }}.tar.gz
         
-  # Update-Tag-Version:
-  #   runs-on: ubuntu-latest
-  #   needs: [Get-Tag-Version,Create-Upload-Artifact]
-  #   steps:
-  #   - name: Checkout source
-  #     uses: actions/checkout@v4
+  Update-Tag-Version:
+    runs-on: ubuntu-latest
+    needs: [Get-Tag-Version,Create-Upload-Artifact]
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
       
-  #   - name: Create Git tag for new version
-  #     run: |
-  #         git tag v${{ needs.Get-Tag-Version.outputs.VERSION }}
-  #         git push origin v${{ needs.Get-Tag-Version.outputs.VERSION }}
+    - name: Create Git tag for new version
+      run: |
+          git tag v${{ needs.Get-Tag-Version.outputs.VERSION }}
+          git push origin v${{ needs.Get-Tag-Version.outputs.VERSION }}
 
-  # Deploy-to-S3-Bucket:
-  #   runs-on: ubuntu-latest
-  #   needs: [Get-Tag-Version,Update-Tag-Version,Create-Upload-Artifact]
-  #   steps:
-  #     - name: Checkout source
-  #       uses: actions/checkout@v4    
+  Deploy-to-S3-Bucket:
+    runs-on: ubuntu-latest
+    needs: [Get-Tag-Version,Update-Tag-Version,Create-Upload-Artifact]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4    
 
-  #     - name: Download tarball artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: my-tar-archive
-  #         path: .
-  #         merge-multiple: true
+      - name: Download tarball artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: my-tar-archive
+          path: .
+          merge-multiple: true
 
-  #     - name: Extract .tar.gz file
-  #       run: |
-  #        VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
-  #        TARBALL="my-static-site-$VERSION.tar.gz"
-  #        EXTRACT_DIR="extracted-v$VERSION"
+      - name: Extract .tar.gz file
+        run: |
+         VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
+         TARBALL="my-static-site-$VERSION.tar.gz"
+         EXTRACT_DIR="extracted-v$VERSION"
 
-  #        mkdir "$EXTRACT_DIR"
-  #        tar -xzf "$TARBALL" -C "$EXTRACT_DIR"
+         mkdir "$EXTRACT_DIR"
+         tar -xzf "$TARBALL" -C "$EXTRACT_DIR"
 
-  #        echo "Extracted contents:"
-  #        ls -l "$EXTRACT_DIR"
-  #     - name: AWS configure credentilas
-  #       uses: aws-actions/configure-aws-credentials@v4.1.0
-  #       with:
-  #         role-to-assume: ${{ secrets.IAM_ROLE }}
-  #         aws-region: us-east-1
+         echo "Extracted contents:"
+         ls -l "$EXTRACT_DIR"
+      - name: AWS configure credentilas
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: ${{ secrets.IAM_ROLE }}
+          aws-region: us-east-1
         
-  #     - name: Upload archive to S3
-  #       run: |
-  #         VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
-  #         DIR="extracted-v$VERSION"
+      - name: Upload archive to S3
+        run: |
+          VERSION="${{ needs.Get-Tag-Version.outputs.VERSION }}"
+          DIR="extracted-v$VERSION"
 
-  #         aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website-tf/$VERSION/index.html
-  #         aws s3 cp "$DIR/images/" s3://aws-mypersonal-website-tf/$VERSION/images/ --recursive
-  #         aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website-tf/$VERSION/styles/ --recursive
-  #         #aws s3 cp s3://aws-mypersonal-website-tf/root.json root.json
-  #         touch root.json
-  #         echo '{ 
-  #           "version": "$VERSION" 
-  #         }' > root.json       
-  #         sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" root.json
-  #         aws s3 cp "root.json" s3://aws-mypersonal-website-tf/root.json
+          aws s3 cp "$DIR/index.html" s3://aws-mypersonal-website-tf/$VERSION/index.html
+          aws s3 cp "$DIR/images/" s3://aws-mypersonal-website-tf/$VERSION/images/ --recursive
+          aws s3 cp "$DIR/styles/" s3://aws-mypersonal-website-tf/$VERSION/styles/ --recursive
+          #aws s3 cp s3://aws-mypersonal-website-tf/root.json root.json
+          touch root.json
+          echo '{ 
+            "version": "$VERSION" 
+          }' > root.json       
+          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" root.json
+          aws s3 cp "root.json" s3://aws-mypersonal-website-tf/root.json
 
-  #     # - name: Sleep for 2 minutes
-  #     #   run: sleep 120
+      # - name: Sleep for 2 minutes
+      #   run: sleep 120
   Deploy-Lambda-edge:
     runs-on: ubuntu-latest
-  #  needs: [Get-Tag-Version,Update-Tag-Version,Create-Upload-Artifact,Deploy-to-S3-Bucket]
+    needs: [Get-Tag-Version,Update-Tag-Version,Create-Upload-Artifact,Deploy-to-S3-Bucket]
     steps:
       - name: AWS configure credentilas
         uses: aws-actions/configure-aws-credentials@v4.1.0
@@ -135,42 +135,42 @@ jobs:
            | .instances[0].attributes.id' ./terrafrom.tf.state)
            echo "DISTRIBUTION_ID=$DIST_ID" >> $GITHUB_OUTPUT      
         
-      # - name: Get current Lambda version
-      #   id: get_version
-      #   run: |
-      #     # Publish the new Lambda version
-      #     publish_response=$(aws lambda publish-version --function-name versionedUriRewriter-tf --region us-east-1)
+      - name: Get current Lambda version
+        id: get_version
+        run: |
+          # Publish the new Lambda version
+          publish_response=$(aws lambda publish-version --function-name versionedUriRewriter-tf --region us-east-1)
     
-      #     # Extract the ARN and version number from the response
-      #     FUNCTION_ARN=$(echo $publish_response | jq -r '.FunctionArn')
-      #     VERSION=$(echo $publish_response | jq -r '.Version')
+          # Extract the ARN and version number from the response
+          FUNCTION_ARN=$(echo $publish_response | jq -r '.FunctionArn')
+          VERSION=$(echo $publish_response | jq -r '.Version')
 
-      #     # Output the version and ARN for the next step
-      #     echo "Latest Lambda Version: $VERSION"
-      #     echo "LambdaArn=$FUNCTION_ARN" >> $GITHUB_ENV
-      #     echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # Output the version and ARN for the next step
+          echo "Latest Lambda Version: $VERSION"
+          echo "LambdaArn=$FUNCTION_ARN" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      # - name: Update CloudFront with new Lambda version
-      #   run: |
-      #     # Use the function ARN passed from the previous step
-      #     FUNCTION_ARN=${{ env.LambdaArn }}
-      #     DIST_ID="E2ORPHF7M1300M"  # Replace with your CloudFront distribution ID
+      - name: Update CloudFront with new Lambda version
+        run: |
+          # Use the function ARN passed from the previous step
+          FUNCTION_ARN=${{ env.LambdaArn }}
+          DIST_ID=${{ steps.extract_distribution.outputs.DISTRIBUTION_ID }}
     
-      #     # Get the current ETag from CloudFront distribution
-      #     ETAG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'ETag' --output text)
+          # Get the current ETag from CloudFront distribution
+          ETAG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'ETag' --output text)
   
-      #     # Retrieve the current distribution config
-      #     DIST_CONFIG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'DistributionConfig' --output json)
+          # Retrieve the current distribution config
+          DIST_CONFIG=$(aws cloudfront get-distribution-config --id $DIST_ID --query 'DistributionConfig' --output json)
 
-      #     # Modify the distribution config to add the Lambda function association
-      #     # You may need to use jq or other methods to dynamically modify the DIST_CONFIG
-      #     UPDATED_CONFIG=$(echo $DIST_CONFIG | jq '.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = "'$FUNCTION_ARN'"')
+          # Modify the distribution config to add the Lambda function association
+          # You may need to use jq or other methods to dynamically modify the DIST_CONFIG
+          UPDATED_CONFIG=$(echo $DIST_CONFIG | jq '.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].LambdaFunctionARN = "'$FUNCTION_ARN'"')
     
-      #     # Update the CloudFront distribution with the new Lambda function ARN
-      #     aws cloudfront update-distribution \
-      #       --id $DIST_ID \
-      #       --if-match $ETAG \
-      #       --distribution-config "$UPDATED_CONFIG"
+          # Update the CloudFront distribution with the new Lambda function ARN
+          aws cloudfront update-distribution \
+            --id $DIST_ID \
+            --if-match $ETAG \
+            --distribution-config "$UPDATED_CONFIG"
 
       - name: Create CloudFront Invalidation
         run: |
@@ -178,6 +178,7 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ steps.extract_distribution.outputs.DISTRIBUTION_ID }} \
             --paths "/*"
+
 
 
 
